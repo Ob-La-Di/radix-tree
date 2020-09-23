@@ -17,14 +17,19 @@ func main() {
 			},
 			&Node{
 				path: "st",
+				children:  []*Node {
+					&Node {
+						path: "ify",
+					},
+				},
 			},
 		},
 	}
 
-	node, exactMatch := findNode(&root, "abcd")
+	node, indexInNode, indexInPath := findNode(&root, "abcd", 0)
 
 	if node != nil {
-        fmt.Printf("Found a matching node: %v with exact match: %v", node, exactMatch)
+        fmt.Printf("Found a matching node: %v with index in node: %d, index in path: %d", node, indexInNode, indexInPath)
 	} else {
 	    fmt.Printf("Not found")
     }
@@ -35,38 +40,40 @@ func (node *Node) addNode(path string) error {
     return nil
 }
 
-func findNode(node *Node, path string) (*Node, bool) {
+func findNode(node *Node, path string, currentIndex int) (*Node, int, int) {
 	nodePath := node.path
 
-	if !AreLettersEqual(nodePath, path, 0) {
-		return nil, false
+	currentPath := path[currentIndex:]
+
+	if !AreLettersEqual(nodePath, currentPath, 0) {
+		return nil, -1, -1
 	}
 
-	minLength := shortestString(nodePath, path)
+	minLength := shortestString(nodePath, currentPath)
 
 	for i := range minLength {
-		if AreLettersEqual(nodePath, path, i) {
-			if i == (len(path) - 1) {
-				return node, true
+		if AreLettersEqual(nodePath, currentPath, i) {
+			if i == (len(currentPath) - 1) {
+				return node, i, currentIndex + i
 			}
 
 			if i == len(nodePath)-1 {
 				if len(node.children) == 0 {
-					return node, false
+					return node, i, currentIndex + i
 				}
 
 				for _, child := range node.children {
-					if foundNode, exactMatch := findNode(child, path[i+1:]); foundNode != nil {
-						return foundNode, exactMatch
+					if foundNode, indexInNodePath, indexInOriginalPath := findNode(child, path, i+1+currentIndex); foundNode != nil {
+						return foundNode, indexInNodePath, indexInOriginalPath
 					}
 				}
 			}
 		} else {
-			return node, false
+			return node, i, currentIndex
 		}
 	}
 
-	return nil, false
+	return nil, -1, -1
 }
 
 
